@@ -3,6 +3,9 @@ from flask import jsonify
 from flask import request
 
 import requests
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
 
@@ -27,29 +30,45 @@ def search():
 
     req = requests.get(searchURL + quote_plus(query), verify=False)
     parse = BeautifulSoup(req.text, "html.parser")
-    searchTable = parse.find("table", class_="tbl-downList")
 
-    if not searchTable:
+    if parse.find(class_="no-results"):
         return jsonify({
             "msg": "No sources found"
         }), 404
 
-    rowSearchTable = searchTable.find_all("tr", class_="")
+    # Pagination
+    listOfReq = []
+    listOfReq.append(req) # Append first request
+
+    pagination = parse.find(class_="paginate")
+    if len(pagination.find_all("a")) > 1:
+        for num in pagination.find_all("a")[1:-1]:
+            num = num.text.strip()
+            req = requests.get(searchURL + quote_plus(query) + "&page=" + num, verify=False)
+            listOfReq.append(req)
+
     dataList = []
-    for row in rowSearchTable:
-        dataSearchTable = row.find_all("td")
+    for req in listOfReq:
+        parse = BeautifulSoup(req.text, "html.parser")
+        searchTable = parse.find("table", class_="tbl-downList")
 
-        sourceModel = dataSearchTable[1].text.strip()
-        sourceVersion = dataSearchTable[2].text.strip()
-        sourceDesc = dataSearchTable[3].text.strip()
-        sourceUploadId = dataSearchTable[5].find("a")["href"].split("'")[1]
+        rowSearchTable = searchTable.find_all("tr", class_="")
+        for row in rowSearchTable:
+            dataSearchTable = row.find_all("td")
 
-        dataList.append({
-            "upload_id": sourceUploadId,
-            "source_model": sourceModel,
-            "source_version": sourceVersion,
-            "source_description": sourceDesc,
-        })
+            sourceModel = dataSearchTable[1].text.strip()
+            sourceVersion = dataSearchTable[2].encode_contents().decode().strip()
+            sourceDesc = dataSearchTable[3].text.strip()
+            sourceUploadId = dataSearchTable[5].find("a")["href"].split("'")[1]
+            if "<br/>" in sourceVersion:
+                sourceVersion = [x for x in sourceVersion.split("<br/>")]
+
+            dataList.append({
+                "upload_id": sourceUploadId,
+                "source_model": sourceModel,
+                "source_version": sourceVersion,
+                "source_description": sourceDesc,
+            })
 
     return jsonify(dataList)
 
