@@ -25,7 +25,7 @@ def home():
 def search():
     query = request.args.get("query")
 
-    req = requests.get(searchURL + quote_plus(query))
+    req = requests.get(searchURL + quote_plus(query), verify=False)
     parse = BeautifulSoup(req.text, "html.parser")
     searchTable = parse.find("table", class_="tbl-downList")
 
@@ -52,7 +52,7 @@ def search():
 def download():
     uploadId = request.args.get("uploadId")
 
-    req = requests.get(modalURL + uploadId)
+    req = requests.get(modalURL + uploadId, verify=False)
     parse = BeautifulSoup(req.text, "html.parser")
 
     # Download the source
@@ -71,7 +71,7 @@ def download():
 
     requestCookie = {"JSESSIONID": req.cookies.get("JSESSIONID")}
 
-    requestDown = requests.post(downSrcURL, data=requestData, headers=requestHeader, cookies=requestCookie, stream=True)
+    requestDown = requests.post(downSrcURL, data=requestData, headers=requestHeader, cookies=requestCookie, verify=False, stream=True)
 
     sourceType = requestDown.headers["Content-Type"]
     sourceDisposition = requestDown.headers["Content-Disposition"]
