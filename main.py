@@ -29,6 +29,11 @@ def search():
     parse = BeautifulSoup(req.text, "html.parser")
     searchTable = parse.find("table", class_="tbl-downList")
 
+    if not searchTable:
+        return jsonify({
+            "msg": "No sources found"
+        }), 404
+
     rowSearchTable = searchTable.find_all("tr", class_="")
     dataList = []
     for row in rowSearchTable:
