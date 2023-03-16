@@ -57,11 +57,13 @@ def search():
             dataSearchTable = row.find_all("td")
 
             sourceModel = dataSearchTable[1].text.strip()
-            sourceVersion = dataSearchTable[2].encode_contents().decode().strip()
-            sourceDesc = dataSearchTable[3].text.strip()
             sourceUploadId = dataSearchTable[5].find("a")["href"].split("'")[1]
+            sourceVersion = dataSearchTable[2].encode_contents().decode().strip()
             if "<br/>" in sourceVersion:
                 sourceVersion = [x for x in sourceVersion.split("<br/>")]
+            sourceDesc = dataSearchTable[3].encode_contents().decode().strip()
+            if "<br/>" in sourceDesc:
+                sourceDesc = [x for x in sourceDesc.split("<br/>")]
 
             dataList.append({
                 "upload_id": sourceUploadId,
