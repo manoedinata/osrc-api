@@ -77,6 +77,9 @@ def search():
 @app.route("/download")
 def download():
     uploadId = request.args.get("uploadId")
+    sourceNum = request.args.get("sourceNum")
+    if not sourceNum:
+        sourceNum = 1
 
     req = requests.get(modalURL + uploadId, verify=False)
     parse = BeautifulSoup(req.text, "html.parser")
@@ -84,7 +87,7 @@ def download():
     # Download the source
     requestData = {
         "uploadId": uploadId,
-        "attachIds": parse.find_all("input", type="checkbox")[1]["id"],
+        "attachIds": parse.find_all("input", type="checkbox")[int(sourceNum)]["id"],
         "_csrf": parse.find_all(attrs={"name": "_csrf"})[0]["value"],
         "token": parse.find_all(id="token")[0]["value"].encode("utf-8"),
         "downloadPurpose": "AOP",
